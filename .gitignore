@@ -1,0 +1,7 @@
+*.tmp
+data/*
+Data/*
+data_spikes/*
+path.txt
+.ipynb_checkpoints/
+__pycache__/
