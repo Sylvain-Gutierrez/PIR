@@ -1,1 +1,0 @@
-This README.txt will structure and describe the docuemnts
