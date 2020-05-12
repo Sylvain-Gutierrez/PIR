@@ -300,48 +300,60 @@ def find_spikes(signal, noise_levels, fs,
 
 #record spike
 
-def record_spikes(signal, fs, spike_centers,
+def record_spikes(signal, fs, spike_info,
+                  align_method,
                   t_before = 0.001,
                   t_after = 0.002):
     
-    data = np.array([[float(x) for x in range(int(np.round(fs*(t_before+t_after)))+1)]])
+    if (align_method in spike_info.columns) == False:
+        print("align_method is incorrect, please choose one of the following :" + str(spike_info.columns))
+        return None
+    
+    else:
+        spike_centers = spike_info[align_method].values
+        
+    t_b = int(np.round(fs*(t_before)))
+    t_a = int(np.round(fs*(t_after)))
+    
+    data = np.array([[float(x) for x in range(t_b+t_a+1)]])
     
     initial_index = int(np.round(signal.index[0]*fs/1000))
-    print('initial index:'+str(initial_index))
     
     for center in spike_centers:
-        if center < int(np.round(fs*t_before)) + initial_index:
-            spike = [0 for i in range(0, int(np.round(fs*t_before-(center-initial_index))))]
-            #print('spike before concat:'+ str(len(spike)))
-            #spike = np.concatenate(spike, signal.iloc[:center + int(np.round(fs*t_after))].values())
-            spike = np.concatenate((spike, signal.values[:center + int(np.round(fs*t_after)) - initial_index]))
-            #print('spike after concat:'+str(len(spike)))
+        if center < t_b + initial_index:
+            spike = [0 for i in range(0, t_b-(center-initial_index))]
+            spike = np.concatenate((spike, signal.values[:center + t_a - initial_index]))
             data = np.insert(data, len(data), spike, axis=0)
             
-        elif center > int(np.round(len(signal)-fs*t_after)) + initial_index:
-            #spike = signal.iloc[int(np.round(center-fs*t_before)):].values()
-            spike = signal.values[int(np.round(center-fs*t_before))-initial_index:]
-            #print('spike before concat:'+str(len(spike)))
-            spike = np.concatenate((spike,[0 for i in range(0, int(np.round(fs*t_after-(len(signal)+initial_index-center))))]))
-            #print('spike after concat:'+str(len(spike)))
+        elif center > len(signal)-t_a + initial_index:
+            spike = signal.values[center - t_b - initial_index:]
+            spike = np.concatenate((spike,[0 for i in range(0, t_a - (len(signal) + initial_index-center))]))
             data = np.insert(data, len(data), spike, axis=0)
             
         else :
-            #spike = signal.iloc[int(np.round(center - fs*t_before)): int(np.round(center + fs*t_after))+1].values()
-            spike = signal.values[int(np.round(center - fs*t_before))-initial_index: int(np.round(center + fs*t_after))+1-initial_index]
+            spike = signal.values[center - t_b - initial_index: center + t_a + 1 - initial_index]
             data = np.insert(data, len(data), spike, axis=0)
 
     print(np.shape(data))
     data = data.transpose()
-    #print(data)
     spike_data = pd.DataFrame(data)
     
     return spike_data
 
-
-def record_spikes_oneline(signal, fs, spike_centers,
+def record_spikes_oneline(signal, fs, spike_info,
+                  align_method,
                   t_before = 0.001,
                   t_after = 0.002):
+    
+    if (align_method in spike_info.columns) == False:
+        print("align_method is incorrect, please choose one of the following :" + str(spike_info.columns))
+        return None
+    
+    else:
+        spike_centers = spike_info[align_method].values
+        
+    t_b = int(np.round(fs*(t_before)))
+    t_a = int(np.round(fs*(t_after)))
     
     data = np.array(['NaN' for x in range(len(signal))])
     data = data.astype(float)
@@ -349,17 +361,17 @@ def record_spikes_oneline(signal, fs, spike_centers,
     times = times.astype(pd.Timestamp)
     
     for center in spike_centers:
-        if center < int(np.round(fs*t_before)):
-            data[:center + int(np.round(fs*t_after))] = signal.values[:center + int(np.round(fs*t_after))]
-            times[:center + int(np.round(fs*t_after))] = signal.index[:center + int(np.round(fs*t_after))]
+        if center < t_b:
+            data[:center + t_a] = signal.values[:center + t_a]
+            times[:center + t_a] = signal.index[:center + t_a]
             
-        elif center > int(np.round(len(signal)-fs*t_after)):
-            data[int(np.round(center-fs*t_before)):] = signal.values[int(np.round(center-fs*t_before)):]
-            times[int(np.round(center-fs*t_before)):] = signal.index[int(np.round(center-fs*t_before)):]
+        elif center > len(signal) - t_a:
+            data[center - t_b:] = signal.values[center - t_b:]
+            times[center - t_b:] = signal.index[center - t_b:]
             
         else :
-            data[int(np.round(center - fs*t_before)): int(np.round(center + fs*t_after))+1] = signal.values[int(np.round(center - fs*t_before)): int(np.round(center + fs*t_after))+1]
-            times[int(np.round(center - fs*t_before)): int(np.round(center + fs*t_after))+1] = signal.index[int(np.round(center - fs*t_before)): int(np.round(center + fs*t_after))+1]
+            data[center - t_b: center + t_a + 1] = signal.values[center - t_b: center + t_a + 1]
+            times[center - t_b: center + t_a + 1] = signal.index[center - t_b: center + t_a + 1]
 
     spike_data_oneline = pd.DataFrame(data, index = times.astype(float))
     
