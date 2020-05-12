@@ -176,7 +176,7 @@ def init_noise_levels_MAD(signal, fs,
 #find spike
 
 def find_spike(signal, initial_index, noise_levels, fs, spike_info, 
-               window_size = 0.001, 
+               window_size = 0.002, 
                noise_window_size = 0.01,
                threshold_factor = 3.5,
                maxseparation = 0.0008):
@@ -218,27 +218,31 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                         return i
                
                 i_min = -33
+                
                 #partir à la recherche d'un min du spike
                 for k in range(int(np.round(maxseparation*fs))):
-                    if (i-offset_index+k) < len(signal)-1:
+                    if (i-offset_index + k) < len(signal)-1:
                         if signal.iloc[i-offset_index+k] < -threshold and signal.iloc[i-offset_index+k]<signal.iloc[i-offset_index+k+1]:
-                            i_min = i+k
-                            #print("i_min: "+str(i_min))
-                            break
-                    if (i-offset_index-k) > 0:
+                            if checkminlocal(signal, "right",i+k,offset_index,3):
+                            #if(signal.iloc[i-offset_index+k+1]<signal.iloc[i-offset_index+k+2]):
+                                i_min = i+k
+                                break
+                    if (i-offset_index - k) > 0:
                         if signal.iloc[i-offset_index-k]<-threshold and signal.iloc[i-offset_index-k]<signal.iloc[i-offset_index-k-1]:
-                            i_min = i-k
-                            #print("i_min: "+str(i_min))
-                            break
+                            if checkminlocal(signal, "left",i-k,offset_index,3):
+                            #if(signal.iloc[i-offset_index-k-1]<signal.iloc[i-offset_index-k-2]):
+                                i_min = i-k
+                                break
+                
+                
                 if i_min == -33:
                     #on a pas rencontré de spike
-                    #print("j'ai pas trouvé l'extremum minimum :'('")
                     while signal.iloc[i-offset_index]>threshold:
                         i += 1
                     return i
+                
                 else:
                     #récolte infos du spike
-                    #print("J'ai trouvé un spike! et je l'enregistre :D")
                     #on cherche ensuite le premier depassement positif (indpos) et négatif (indneg)
                     indpos = i
                     indneg = i_min
@@ -273,12 +277,35 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                 
                 break  
             i += 1
+
     return -44
+
+def checkminlocal(local_signal, sens, supposed_i_min,offset_index, nb_index_research=3):
+    if(sens == "right"):
+        k = 0
+        while k <= nb_index_research:
+        #for k in range(nb_index_research):
+            if((local_signal.iloc[supposed_i_min-offset_index + k]) > (local_signal.iloc[supposed_i_min-offset_index + k + 1])):
+                return False
+            k += 1
+        return True
+    elif(sens == "left"):
+        k = 0
+        while k <= nb_index_research:
+        #for k in range(nb_index_research):
+            if((local_signal.iloc[supposed_i_min-offset_index - k]) > (local_signal.iloc[supposed_i_min-offset_index - k - 1])):
+                return False
+            k+=1
+        return True
+    else:
+        return False
+
+
 
 #vérifier que le deuxième extrêmum n'est pas collé au mur de gauche ni de droite
             
 def find_spikes(signal, noise_levels, fs, 
-               window_size = 0.001, 
+               window_size = 0.002, 
                noise_window_size = 0.01,
                threshold_factor = 3.5,
                maxseparation = 0.0008):
@@ -292,7 +319,9 @@ def find_spikes(signal, noise_levels, fs,
                              noise_window_size = noise_window_size,
                              threshold_factor = threshold_factor,
                              maxseparation = 0.0008)
+        
     df_spike_info = pd.DataFrame(spike_info)
+    
     df_spike_info.columns = ['indice_max','indice_min','indice_depass_positif','indice_depass_negatif', 'indice_1er_depass','indice_zero_central','i_max-i_min','Delta_amplitudes']
 
     return df_spike_info
@@ -376,3 +405,31 @@ def record_spikes_oneline(signal, fs, spike_info,
     spike_data_oneline = pd.DataFrame(data, index = times.astype(float))
     
     return spike_data_oneline
+
+def print_spikes(spike_data,
+                 t_before_alignement = 0,
+                 first_spike = 1,
+                 last_spike = -1,
+                 fs = 25000):
+    #spike_data.iloc[:,first_spike:last_spike].plot()
+    t_b = int(np.round(fs*(t_before_alignement)))
+    plt.plot((spike_data.iloc[:,0]-t_b)*1000/fs, spike_data.iloc[:,first_spike:last_spike])
+    plt.xlabel('Time')
+    plt.grid(True)
+    
+"""
+print_spikes(spike_data,
+             t_before_alignement = 0.0015,
+             first_spike = 1,
+             last_spike = 20,
+             fs = 25000)
+""";
+
+def plot_spikes_on_full_signal(signal):
+    plt.plot(df.index, signal, color = 'blue')
+    plt.plot(spike_data_oneline.index, spike_data_oneline, color = 'red')
+    plt.title('Filtered Signal with Detected Spikes with RMS')
+    plt.xlabel('Time Windows')
+    plt.ylabel('Amplitude [µV]')
+    plt.legend()
+    plt.grid(True)
