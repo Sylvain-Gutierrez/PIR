@@ -406,24 +406,59 @@ def record_spikes_oneline(signal, fs, spike_info,
     
     return spike_data_oneline
 
+from random import randint
+
+
 def print_spikes(spike_data,
                  t_before_alignement = 0,
                  first_spike = 1,
                  last_spike = -1,
-                 fs = 25000):
-    #spike_data.iloc[:,first_spike:last_spike].plot()
+                 fs = 25000,
+                 randomize = False,
+                 nb_spike = 20,
+                 y_lim_min = -50,
+                 y_lim_max = 60):
+    
+    if randomize == True:
+        kept = []
+        i = 0
+        m = len(spike_data.values[0])
+        while i < nb_spike:
+            r = randint(0,m-1)
+            if (r in kept) == False:
+                kept.append(r)
+                i += 1        
+        x = spike_data.iloc[:,kept].values
+        
+    else:
+        x = spike_data.iloc[:,first_spike:last_spike]
+        
+    figure = plt.figure()
     t_b = int(np.round(fs*(t_before_alignement)))
-    plt.plot((spike_data.iloc[:,0]-t_b)*1000/fs, spike_data.iloc[:,first_spike:last_spike])
-    plt.xlabel('Time')
-    plt.grid(True)
+    axes = figure.add_subplot(1, 1, 1)
+    axes.plot((spike_data.iloc[:,0]-t_b)*1000/fs, x)
+    axes.set_xlabel('Time in ms')
+    axes.set_ylim(y_lim_min , y_lim_max)
+    axes.grid()
     
 """
 print_spikes(spike_data,
              t_before_alignement = 0.0015,
              first_spike = 1,
              last_spike = 20,
-             fs = 25000)
-""";
+             fs = 25000,
+             y_lim_min = -50,
+             y_lim_max = 60)
+             
+print_spikes(spike_data,
+             t_before_alignement = 0.0015,
+             fs = 25000,
+             randomize = True,
+             nb_spike = 20,
+             y_lim_min = -50,
+             y_lim_max = 60)
+"""
+
 
 def plot_spikes_on_full_signal(signal):
     plt.plot(df.index, signal, color = 'blue')
