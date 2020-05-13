@@ -408,7 +408,6 @@ def record_spikes_oneline(signal, fs, spike_info,
 
 from random import randint
 
-
 def print_spikes(spike_data,
                  t_before_alignement = 0,
                  first_spike = 1,
@@ -419,15 +418,19 @@ def print_spikes(spike_data,
                  y_lim_min = -50,
                  y_lim_max = 60):
     
-    if randomize == True:
+    if randomize == True:        
         kept = []
-        i = 0
         m = len(spike_data.values[0])
-        while i < nb_spike:
-            r = randint(0,m-1)
-            if (r in kept) == False:
-                kept.append(r)
-                i += 1        
+        if m <= nb_spike:
+            kept = [i for i in range(m)]
+        else:      
+            i = 0  
+            while i < nb_spike:
+                r = randint(0,m-1)
+                if (r in kept) == False:
+                    kept.append(r)
+                    i += 1
+        
         x = spike_data.iloc[:,kept].values
         
     else:
