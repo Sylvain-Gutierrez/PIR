@@ -271,8 +271,9 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                          # indice max, indice min, indice 1er depasssement pos, indice 1er depassement nég, 
                             # premier dépassement, indice du zero central,distance entre max et min, 
                             #variation d'amplitude entre min et max
+                    
                     spike_info.append([i, i_min, indpos, indneg, min(indpos,indneg), indzero, i-i_min, 
-                                       abs(signal.iloc[i-offset_index]-signal.iloc[i_min-offset_index])])
+                                       (signal.iloc[i-offset_index]-signal.iloc[i_min-offset_index])])
                     return i+int(np.round(window_size*fs))
                 
                 break  
