@@ -374,7 +374,7 @@ def record_spikes_oneline(signal, fs, spike_info,
                   align_method,
                   t_before = 0.001,
                   t_after = 0.002):
-    
+
     if (align_method in spike_info.columns) == False:
         print("align_method is incorrect, please choose one of the following :" + str(spike_info.columns))
         return None
@@ -382,6 +382,8 @@ def record_spikes_oneline(signal, fs, spike_info,
     else:
         spike_centers = spike_info[align_method].values
         
+    offset_index = int(np.round(signal.index[0]*fs/1000))
+    
     t_b = int(np.round(fs*(t_before)))
     t_a = int(np.round(fs*(t_after)))
     
@@ -391,17 +393,17 @@ def record_spikes_oneline(signal, fs, spike_info,
     times = times.astype(pd.Timestamp)
     
     for center in spike_centers:
-        if center < t_b:
-            data[:center + t_a] = signal.values[:center + t_a]
-            times[:center + t_a] = signal.index[:center + t_a]
+        if center < t_b + offset_index:
+            data[:center + t_a - offset_index] = signal.values[:center + t_a - offset_index]
+            times[:center + t_a - offset_index] = signal.index[:center + t_a - offset_index]
             
-        elif center > len(signal) - t_a:
-            data[center - t_b:] = signal.values[center - t_b:]
-            times[center - t_b:] = signal.index[center - t_b:]
+        elif center > len(signal) - t_a + offset_index:
+            data[center - t_b - offset_index:] = signal.values[center - t_b - offset_index:]
+            times[center - t_b - offset_index:] = signal.index[center - t_b - offset_index:]
             
         else :
-            data[center - t_b: center + t_a + 1] = signal.values[center - t_b: center + t_a + 1]
-            times[center - t_b: center + t_a + 1] = signal.index[center - t_b: center + t_a + 1]
+            data[center - t_b - offset_index: center + t_a + 1 - offset_index] = signal.values[center - t_b - offset_index: center + t_a + 1 - offset_index]
+            times[center - t_b - offset_index: center + t_a + 1 - offset_index] = signal.index[center - t_b - offset_index: center + t_a + 1 - offset_index]
 
     spike_data_oneline = pd.DataFrame(data, index = times.astype(float))
     
