@@ -173,8 +173,6 @@ def init_noise_levels_MAD(signal, fs,
 
 
 
-#find spike
-
 # find spikes
 
 def find_spike(signal, initial_index, noise_levels, fs, spike_info,
@@ -191,6 +189,14 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
         for value in signal.iloc[initial_index-offset_index:]:
             threshold = threshold_factor*noise_levels[int(np.round((i/fs)//noise_window_size))]
             if value < -threshold:
+
+                #verifier qu'on est pas encore dans un effet du spike precedant et decaler la fenetre si besoin
+                if signal.iloc[initial_index-offset_index-1] < -threshold:
+                    for value_ in signal.iloc[initial_index-offset_index:]:
+                        if value_ > -threshold:
+                            return i
+                        i += 1
+
                 indice_1er_depass = i
                 while(True):
                     if i < len(signal)+offset_index-1:
@@ -215,7 +221,7 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                     if (i-offset_index - k) > 0:
                         if signal.iloc[i-offset_index-k] > threshold and signal.iloc[i-offset_index-k]>signal.iloc[i-offset_index-k-1]:
                             if checkmaxlocal(signal, "left",i-k,offset_index,int(np.round(time_checkmaxlocal*fs))):
-                                i_mqx_left = i-k
+                                i_max_left = i-k
                                 break
                 
                 
@@ -245,7 +251,7 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                     spike_info.append([i, indice_1er_depass,
                                         i_max_left, i_max_right,
                                         amplitude])
-                    return i+int(np.round(window_size*fs))
+                    return indice_1er_depass+int(np.round(window_size*fs))
                 
                 break  
             i += 1
