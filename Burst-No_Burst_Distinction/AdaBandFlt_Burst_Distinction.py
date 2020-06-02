@@ -302,13 +302,13 @@ def find_spikes(signal, noise_levels, fs,
                              noise_window_size = noise_window_size,
                              threshold_factor = threshold_factor,
                              maxseparation = maxseparation,
-                             time_checkmaxlocal = time_checkmaxlocal)
-        
+                             time_checkmaxlocal = time_checkmaxlocal,
+                             burst_threshold = burst_threshold)
+
     df_spike_info = pd.DataFrame(spike_info)
     df_spike_info.columns = ['indice_min', 'indice_1er_depass','indice_max_gauche','indice_max_droite','Delta_amplitudes','burst?']
 
     return df_spike_info
-
 
 #record spike
 
