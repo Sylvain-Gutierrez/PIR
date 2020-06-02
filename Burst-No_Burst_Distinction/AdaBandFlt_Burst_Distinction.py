@@ -180,7 +180,9 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                noise_window_size = 0.01,
                threshold_factor = 3.5,
                maxseparation = 0.0008,
-               time_checkmaxlocal = 0.0002):
+               time_checkmaxlocal = 0.0002,
+               reduct_factor = 0.6,
+               burst_threshold = 10): #facteur de réduction pour le threshold positif
     
     offset_index = int(np.round(signal.index[0]*fs/1000))
     
@@ -211,7 +213,7 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                 i_max_right = 'nan'  
                 for k in range(int(np.round(maxseparation*fs))):
                     if (i-offset_index + k) < len(signal)-1:
-                        if signal.iloc[i-offset_index+k] > threshold and signal.iloc[i-offset_index+k]>signal.iloc[i-offset_index+k+1]:
+                        if signal.iloc[i-offset_index+k] > reduct_factor*threshold and signal.iloc[i-offset_index+k]>signal.iloc[i-offset_index+k+1]:
                             if checkmaxlocal(signal, "right",i+k,offset_index,int(np.round(time_checkmaxlocal*fs))):
                                 i_max_right = i+k
                                 break
@@ -219,7 +221,7 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                 i_max_left = 'nan'  
                 for k in range(int(np.round(maxseparation*fs))):
                     if (i-offset_index - k) > 0:
-                        if signal.iloc[i-offset_index-k] > threshold and signal.iloc[i-offset_index-k]>signal.iloc[i-offset_index-k-1]:
+                        if signal.iloc[i-offset_index-k] > reduct_factor*threshold and signal.iloc[i-offset_index-k]>signal.iloc[i-offset_index-k-1]:
                             if checkmaxlocal(signal, "left",i-k,offset_index,int(np.round(time_checkmaxlocal*fs))):
                                 i_max_left = i-k
                                 break
@@ -244,13 +246,18 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                     elif i_max_right != 'nan':
                             amplitude = signal.iloc[i_max_right-offset_index] - signal.iloc[i-offset_index]
                     
+                    if amplitude >= 2*burst_threshold:
+                        is_it_burst = True
+                    elif amplitude < 2*burst_threshold:
+                        is_it_burst = False
+  
                         # indice min, indice 1er depasssement
                         # max gauche, max droite
                         # variation d'amplitude entre min et max
                     
                     spike_info.append([i, indice_1er_depass,
                                         i_max_left, i_max_right,
-                                        amplitude])
+                                        amplitude,is_it_burst])
                     return indice_1er_depass+int(np.round(window_size*fs))
                 
                 break  
@@ -283,7 +290,8 @@ def find_spikes(signal, noise_levels, fs,
                noise_window_size = 0.01,
                threshold_factor = 3.5,
                maxseparation = 0.0008,
-               time_checkmaxlocal = 0.0002):
+               time_checkmaxlocal = 0.0002,
+               burst_threshold = 10):
     
     initial = int(np.round(signal.index[0]*fs/1000))
     spike_info = []
@@ -294,13 +302,13 @@ def find_spikes(signal, noise_levels, fs,
                              noise_window_size = noise_window_size,
                              threshold_factor = threshold_factor,
                              maxseparation = maxseparation,
-                             time_checkmaxlocal = time_checkmaxlocal)
-        
+                             time_checkmaxlocal = time_checkmaxlocal,
+                             burst_threshold = burst_threshold)
+
     df_spike_info = pd.DataFrame(spike_info)
-    df_spike_info.columns = ['indice_min', 'indice_1er_depass','indice_max_gauche','indice_max_droite','Delta_amplitudes']
+    df_spike_info.columns = ['indice_min', 'indice_1er_depass','indice_max_gauche','indice_max_droite','Delta_amplitudes','burst?']
 
     return df_spike_info
-
 
 #record spike
 

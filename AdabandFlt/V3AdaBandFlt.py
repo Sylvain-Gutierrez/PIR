@@ -180,7 +180,8 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                noise_window_size = 0.01,
                threshold_factor = 3.5,
                maxseparation = 0.0008,
-               time_checkmaxlocal = 0.0002):
+               time_checkmaxlocal = 0.0002,
+               reduct_factor = 0.6): #facteur de réduction pour le threshold positif
     
     offset_index = int(np.round(signal.index[0]*fs/1000))
     
@@ -211,7 +212,7 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                 i_max_right = 'nan'  
                 for k in range(int(np.round(maxseparation*fs))):
                     if (i-offset_index + k) < len(signal)-1:
-                        if signal.iloc[i-offset_index+k] > threshold and signal.iloc[i-offset_index+k]>signal.iloc[i-offset_index+k+1]:
+                        if signal.iloc[i-offset_index+k] > reduct_factor*threshold and signal.iloc[i-offset_index+k]>signal.iloc[i-offset_index+k+1]:
                             if checkmaxlocal(signal, "right",i+k,offset_index,int(np.round(time_checkmaxlocal*fs))):
                                 i_max_right = i+k
                                 break
@@ -219,7 +220,7 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                 i_max_left = 'nan'  
                 for k in range(int(np.round(maxseparation*fs))):
                     if (i-offset_index - k) > 0:
-                        if signal.iloc[i-offset_index-k] > threshold and signal.iloc[i-offset_index-k]>signal.iloc[i-offset_index-k-1]:
+                        if signal.iloc[i-offset_index-k] > reduct_factor*threshold and signal.iloc[i-offset_index-k]>signal.iloc[i-offset_index-k-1]:
                             if checkmaxlocal(signal, "left",i-k,offset_index,int(np.round(time_checkmaxlocal*fs))):
                                 i_max_left = i-k
                                 break
