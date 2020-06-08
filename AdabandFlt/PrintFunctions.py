@@ -218,6 +218,17 @@ def print_spikes_clusterized_oneline(signal, spike_data_clusterized_oneline,
     axes.legend(legend)
     axes.grid(True)
 
+    plt.figure()
+    plt.plot(signal.index, signal)
+    for cluster in spike_data_clusterized_oneline.columns:
+        plt.plot(signal.index, spike_data_clusterized_oneline[cluster])
+    plt.title('Every clusters on the signal of origin')
+    plt.xlabel('Time in ms')
+    plt.ylabel('Amplitude [µV]')
+    plt.ylim(y_lim_min , y_lim_max)
+    plt.legend(legend)
+    plt.grid(True)
+
 
 def print_clusters_3d(labels, X):
     """

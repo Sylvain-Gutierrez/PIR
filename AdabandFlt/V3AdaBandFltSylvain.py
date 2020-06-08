@@ -523,7 +523,7 @@ def record_spikes_clusterized_oneline(signal,
                                       fs, 
                                       spike_info,
                                       align_method,
-                                      labels,
+                                      labels = None,
                                       t_before = 0.001,
                                       t_after = 0.002):
     """
@@ -531,7 +531,7 @@ def record_spikes_clusterized_oneline(signal,
     fs :            int - the sampling frequency of the signal
     spike_info :    data_frame - the DataFrame containing the informations about the spikes to record
     align_method :  string - the specific point in spike_info to use for spike's alignement
-    labels          array_like - the cluster's labels of the differents spikes
+    labels          array_like - the cluster's labels of the differents spikes, none id the labels are already in spike_info
 
     Default_
     t_before :      float - time to record before the alignement point (in s)
@@ -539,6 +539,23 @@ def record_spikes_clusterized_oneline(signal,
     
     This function record the spikes aligned with align_method and store them in a different signal of the same size as signal for each cluster
     """
+
+    try:
+        if labels != None:
+            print('The labels located in labels will be used')
+        else:
+            try:
+                labels = spike_info['cluster_label'].values
+                print('The labels located in spike_info will be used')
+            except KeyError as e:
+                print('The labels has to be either in labels or in the column cluster_label in spike_info')
+                raise e
+           
+    except ValueError:
+         print('The labels located in labels will be used')
+
+
+
 
     if (align_method in spike_info.columns) == False:
         print("align_method is incorrect, please choose one of the following :" + str(spike_info.columns))
