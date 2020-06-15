@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from random import randint
+from mpl_toolkits.mplot3d import Axes3D
 
 def print_spikes(spike_data,
                  t_before_alignement = 0,
