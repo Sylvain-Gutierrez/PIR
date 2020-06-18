@@ -264,7 +264,8 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                threshold_factor = 3.5,
                reduct_factor  = 0.33,
                maxseparation = 0.0008,
-               time_checkmaxlocal = 0.0002):
+               time_checkmaxlocal = 0.0002,
+               burst_threshold = 7):
     """
     signal :                    data_frame - the signal after denoising
     initial_index :             int - the index where we initiate the search for a spike
@@ -280,6 +281,7 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                                 (in addition to the threshold_factor) (0<=.<=1)
     maxseparation :             float - maximum time between the min and the max of a spike (used to find max) (in s)
     time_checkmaxlocal :        float - time scale where a value has to be a local max to be considered max of the spike (used to find max) (in s)
+    burst_threshold :           float - minimum amplitude threshold defining if a spike is in a burst phenomenom or not
     
     This function browse the signal begining at the initial index, searching for a spike and recording the usefull information of the fund spike
     """
@@ -347,14 +349,20 @@ def find_spike(signal, initial_index, noise_levels, fs, spike_info,
                     elif i_max_right != 'nan':
                             amplitude = signal.iloc[i_max_right-offset_index] - signal.iloc[i-offset_index]
                     
+                    if amplitude >= 2*burst_threshold:
+                        is_it_burst = True
+                    elif amplitude < 2*burst_threshold:
+                        is_it_burst = False
+
                     #corresponding labels :
                         # indice min, indice 1er depasssement
                         # max gauche, max droite
                         # variation d'amplitude entre min et max
+                        # is_it_burst
                     
                     spike_info.append([i, indice_1er_depass,
                                         i_max_left, i_max_right,
-                                        amplitude])
+                                        amplitude, is_it_burst])
                     return i+int(np.round(window_size*fs))
                 
                 break  
@@ -410,7 +418,8 @@ def find_spikes(signal, noise_levels, fs,
                threshold_factor = 3.5,
                positive_threshold_factor = 0.33,
                maxseparation = 0.0008,
-               time_checkmaxlocal = 0.0002):
+               time_checkmaxlocal = 0.0002,
+               burst_threshold = 7):
     """
     signal :                    data_frame - the signal after denoising
     noise_levels :              array_like - list of the noise levels window by window
@@ -424,6 +433,7 @@ def find_spikes(signal, noise_levels, fs,
                                 (in addition to the threshold_factor) (0<=.<=1)
     maxseparation :             float - maximum time between the min and the max of a spike (used to find max) (in s)
     time_checkmaxlocal :        float - time scale where a value has to be a local max to be considered max of the spike (used to find max) (in s)
+    burst_threshold :           float - minimum amplitude threshold defining if a spike is in a burst phenomenom or not
     
     This function browse the signal, searching for spikes and recording the usefull information of the fund spikes in a DataFrame
     """
@@ -437,10 +447,11 @@ def find_spikes(signal, noise_levels, fs,
                              noise_window_size = noise_window_size,
                              threshold_factor = threshold_factor,
                              maxseparation = maxseparation,
-                             time_checkmaxlocal = time_checkmaxlocal)
+                             time_checkmaxlocal = time_checkmaxlocal,
+                             burst_threshold = burst_threshold)
         
     df_spike_info = pd.DataFrame(spike_info)
-    df_spike_info.columns = ['indice_min', 'indice_1er_depass','indice_max_gauche','indice_max_droite','Delta_amplitudes']
+    df_spike_info.columns = ['indice_min', 'indice_1er_depass','indice_max_gauche','indice_max_droite','Delta_amplitudes', 'burst?']
 
     return df_spike_info
 
@@ -642,3 +653,13 @@ def record_spikes_clusterized_oneline(signal,
     spike_data_clusterized_oneline.columns = columns
     
     return spike_data_clusterized_oneline
+
+
+def spike_fine_tuning(spike_info):
+    true_before = spike_info.loc[spike_info['burst?'] == True]
+    True_spikes = true_before.index.values
+    true_before.index = [x for x in range(len(true_before))]
+    for i in range(len(true_before)-1):
+        if(true_before.loc[i+1]['indice_1er_depass']-true_before.loc[i]['indice_1er_depass']<5000):
+            for j in range(True_spikes[i],True_spikes[i+1]):
+                spike_info.at[j, 'burst?'] = True
