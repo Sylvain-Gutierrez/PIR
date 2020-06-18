@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from random import randint
+from mpl_toolkits.mplot3d import Axes3D
 
 def print_spikes(spike_data,
                  t_before_alignement = 0,
@@ -253,4 +254,26 @@ def print_clusters_3d(labels, X):
     ax.scatter(data[:,0], data[:,1], data[:,2], c='black')    
     
     ax.set_title('Nombre de cluster(s) :' + str(nb_clusters))
+    plt.show()
+
+
+def PCA_plot(PCA_X):
+    """
+    PCA_X : ndarray - the position of each spike after the PCA
+    
+    This function print the spikes in the 3D space of the 3 most important directions of the PCA
+    """
+    
+    fig = plt.figure(4,figsize=(4,3))
+    plt.clf()
+    ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=48, azim=134)
+    plt.cla()
+  
+    ax.scatter(PCA_X[:, 0], PCA_X[:, 1], PCA_X[:, 2], cmap=plt.cm.nipy_spectral,
+           edgecolor='k')
+
+    ax.w_xaxis.set_ticklabels([])
+    ax.w_yaxis.set_ticklabels([])
+    ax.w_zaxis.set_ticklabels([])
+
     plt.show()
