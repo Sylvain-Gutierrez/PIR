@@ -264,7 +264,7 @@ def PCA_plot(PCA_X):
     This function print the spikes in the 3D space of the 3 most important directions of the PCA
     """
     
-    fig = plt.figure(4,figsize=(4,3))
+    fig = plt.figure()
     plt.clf()
     ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=48, azim=134)
     plt.cla()
