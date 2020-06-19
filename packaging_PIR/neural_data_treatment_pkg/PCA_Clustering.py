@@ -1,7 +1,13 @@
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.cluster import OPTICS
+from sklearn.cluster import KMeans
+
+try:
+    from sklearn.cluster import OPTICS
+except Exception as e:
+    print("Erreur dans l'importation d'OPTICS")
+
 
 
 def PCA_and_AGGLOCLUST_spikes(spike_data, spike_info, nb_PCA_components=3,
@@ -35,7 +41,7 @@ def PCA_and_AGGLOCLUST_spikes(spike_data, spike_info, nb_PCA_components=3,
 def PCA_and_OPTICS_spikes(spike_data, spike_info, nb_PCA_components=3, min_samples=5, max_eps=10, xi=0.05,min_cluster_size=5):
     
     ## PCA
-    pca_data = np.array(spike_data.iloc[:,1:].values).transpose()
+    pca_data = np.array(spike_data.values).transpose()
     pca = PCA(n_components=nb_PCA_components)
     pca.fit(pca_data)
     PCA_X = pca.transform(pca_data)
@@ -63,3 +69,29 @@ def PCA_and_OPTICS_spikes(spike_data, spike_info, nb_PCA_components=3, min_sampl
     spike_info['cluster_label'] = optics.labels_
     
     return PCA_X, optics, spike_info
+
+
+def PCA_and_KMEANS_spikes(spike_data, spike_info, nb_PCA_components=3, n_clusters=4, random_state=0):
+    
+    ## PCA
+    pca_data = np.array(spike_data.values).transpose()
+    pca = PCA(n_components=nb_PCA_components)
+    pca.fit(pca_data)
+    PCA_X = pca.transform(pca_data)
+    
+    ## OPTICS
+    
+    kmeans = KMeans(n_clusters = n_clusters, random_state = random_state).fit(PCA_X)
+
+    #core_samples_mask = np.zeros_like(optics.labels_, dtype=bool)
+    #core_samples_mask[optics.core_sample_indices_] = True
+    labels = kmeans.labels_
+
+    # Number of clusters in labels, ignoring noise if present.
+    n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+    n_noise_ = list(labels).count(-1)
+    
+    ## Ajout du label des clusters dans spike info
+    spike_info['cluster_label'] = labels
+    
+    return PCA_X, kmeans, spike_info

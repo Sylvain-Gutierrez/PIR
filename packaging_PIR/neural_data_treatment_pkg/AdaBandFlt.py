@@ -495,7 +495,7 @@ def record_spikes(signal, fs, spike_info,
             
         elif center > len(signal)-t_a + initial_index:
             spike = signal.values[center - t_b - initial_index:]
-            spike = np.concatenate((spike,[0 for i in range(0, t_a - (len(signal) + initial_index-center))]))
+            spike = np.concatenate((spike,[0 for i in range(0, t_a - (len(signal) + initial_index-center)+1)]))
             data = np.insert(data, len(data), spike, axis=0)
             
         else :
