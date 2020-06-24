@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import scipy
 from scipy.signal import *
 
 def butter_bandpass(lowcut, highcut, fs, order=5):
@@ -179,7 +180,7 @@ def init_noise_levels_MAD(signal, fs,
                       old_noise_level_propagation = 0.8, 
                       test_level = 5,
                       percentile_value = 25,
-                      plot_percentile_graph = True):
+                      plot_estimator_graph = True):
     """
     signal :                        data_frame - the signal after denoising
     fs :                            int - the sampling frequency of the signal
